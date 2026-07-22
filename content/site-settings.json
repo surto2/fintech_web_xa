@@ -1,0 +1,15 @@
+{
+  "seatsLeft": 9,
+  "seats": 40,
+  "price": "5.480 €",
+  "priceValue": "5480",
+  "deposit": "900 €",
+  "preinscription": "Del 1 de marzo al 13 de octubre de 2026",
+  "academicPeriod": "Del 13 de octubre de 2026 al 10 de septiembre de 2027",
+  "academicPeriodShort": "Oct 2026 – Sep 2027",
+  "edition": "2026-27",
+  "schedule": "Martes, miércoles y jueves, 18:00–21:00",
+  "phone": "+34 677 40 40 98",
+  "email": "drey@ub.edu",
+  "whatsapp": "34677404098"
+}

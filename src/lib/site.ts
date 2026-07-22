@@ -1,3 +1,23 @@
+import settingsData from "../../content/site-settings.json";
+
+export type SiteSettings = {
+  seatsLeft: number;
+  seats: number;
+  price: string;
+  priceValue: string;
+  deposit: string;
+  preinscription: string;
+  academicPeriod: string;
+  academicPeriodShort: string;
+  edition: string;
+  schedule: string;
+  phone: string;
+  email: string;
+  whatsapp: string;
+};
+
+const settings = settingsData as SiteSettings;
+
 export const siteConfig = {
   name: "Máster Fintech, Blockchain y Mercados Financieros",
   shortName: "Máster Fintech UB",
@@ -7,22 +27,22 @@ export const siteConfig = {
     "El Máster de Fintech, Blockchain y Mercados Financieros te convertirá en experto en la industria financiera que aplica nuevas tecnologías a actividades financieras y de inversión. Edición 2026-27 · 60 ECTS · Universitat de Barcelona.",
   url: "https://www.ub.edu/fintech",
   locale: "es_ES",
-  phone: "+34 677 40 40 98",
-  email: "drey@ub.edu",
-  whatsapp: "34677404098",
-  edition: "2026-27",
-  seatsLeft: 9,
-  seats: 40,
-  price: "5.480 €",
-  priceValue: "5480",
+  phone: settings.phone,
+  email: settings.email,
+  whatsapp: settings.whatsapp,
+  edition: settings.edition,
+  seatsLeft: settings.seatsLeft,
+  seats: settings.seats,
+  price: settings.price,
+  priceValue: settings.priceValue,
   ects: 60,
-  deposit: "900 €",
-  schedule: "Martes, miércoles y jueves, 18:00–21:00",
+  deposit: settings.deposit,
+  schedule: settings.schedule,
   modality: "Presencial, semipresencial u online",
   language: "Español",
-  preinscription: "Del 1 de marzo al 13 de octubre de 2026",
-  academicPeriod: "Del 13 de octubre de 2026 al 10 de septiembre de 2027",
-  academicPeriodShort: "Oct 2026 – Sep 2027",
+  preinscription: settings.preinscription,
+  academicPeriod: settings.academicPeriod,
+  academicPeriodShort: settings.academicPeriodShort,
   campusVirtual: "https://campusvirtual.ub.edu/",
   planDocente: "/uploads/2026/06/Plan-Docente-Master-Fintech-2026-27.pdf",
   alumniUrl: "https://app-master-ia-fintech.ub.edu/",

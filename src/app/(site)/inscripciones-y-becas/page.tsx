@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { ButtonLink } from "@/components/ButtonLink";
 import { Section, SectionHeading } from "@/components/Section";
 import { scholarships } from "@/lib/content";
@@ -78,14 +79,60 @@ export default function InscripcionesPage() {
       </Section>
 
       <Section className="mesh">
-        <SectionHeading eyebrow="Becas" title="Ayudas al estudio" />
-        <div className="grid gap-6 md:grid-cols-2">
+        <SectionHeading
+          eyebrow="Becas"
+          title="Ayudas al estudio"
+          description="Dos becas activas para la edición 2026-27. Se solicitan con el mismo formulario de admisión: no hace falta un trámite aparte."
+        />
+        <div className="grid gap-8 lg:grid-cols-2">
           {scholarships.map((s) => (
-            <article key={s.name} className="border border-ub-line bg-white p-6">
-              <h2 className="font-[family-name:var(--font-display)] text-2xl text-ub-navy">
-                {s.name}
-              </h2>
-              <p className="mt-3 text-ub-muted">{s.summary}</p>
+            <article
+              key={s.name}
+              className="overflow-hidden border border-ub-line bg-white"
+            >
+              <div className="relative aspect-[4/3] bg-ub-navy">
+                <Image
+                  src={s.image}
+                  alt={s.imageAlt}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+                {"logo" in s && s.logo ? (
+                  <div className="absolute bottom-4 left-4 rounded bg-white/95 px-3 py-2">
+                    <div className="relative h-8 w-28">
+                      <Image
+                        src={s.logo}
+                        alt={s.sponsor}
+                        fill
+                        className="object-contain"
+                        sizes="112px"
+                      />
+                    </div>
+                  </div>
+                ) : null}
+                <div className="absolute top-4 right-4 bg-ub-blue px-3 py-1.5 text-xs font-semibold tracking-wide text-white uppercase">
+                  {s.amount} de ayuda
+                </div>
+              </div>
+              <div className="p-6">
+                <p className="text-xs tracking-[0.18em] text-ub-blue uppercase">
+                  {s.tagline}
+                </p>
+                <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl text-ub-navy">
+                  {s.name}
+                </h2>
+                <p className="mt-1 text-sm text-ub-muted">{s.sponsor}</p>
+                <p className="mt-4 text-ub-ink">{s.summary}</p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <ButtonLink href={s.pdf} variant="secondary" external>
+                    Bases en PDF
+                  </ButtonLink>
+                  <ButtonLink href="/contacto" variant="secondary">
+                    Solicitar beca
+                  </ButtonLink>
+                </div>
+              </div>
             </article>
           ))}
         </div>

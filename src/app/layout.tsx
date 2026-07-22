@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { siteConfig } from "@/lib/site";
 import "./globals.css";
 
@@ -96,10 +93,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <Header />
-        <main>{children}</main>
-        <Footer />
-        <WhatsAppButton />
+        {children}
         <Analytics />
       </body>
     </html>

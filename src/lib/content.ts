@@ -72,12 +72,12 @@ export const certifications = [
   {
     title: "Asesor Financiero / EIP",
     issuer: "Instituto Español de Analistas · EFPA",
-    text: "Habilita para el asesoramiento financiero y la gestión patrimonial con reconocimiento europeo. Requisito habitual en banca privada.",
+    text: "El máster incluye el curso de preparación. El coste del examen certificativo no está incluido en la matrícula.",
   },
   {
     title: "EFFAS Digital Assets & MiCA",
     issuer: "EFFAS",
-    text: "Acredita el conocimiento de activos digitales bajo el marco europeo. Pocos programas en España la incluyen.",
+    text: "Incluye el curso sobre activos digitales y el marco MiCA. El coste del examen certificativo no está incluido en la matrícula.",
   },
   {
     title: "Chartered Market Technician I",
@@ -418,14 +418,28 @@ export const partners = [
 
 export const scholarships = [
   {
-    name: "Beca Crandon Talent",
+    name: "Beca Maria Àngels Vallvé Ribera",
+    tagline: "Mujeres con talento",
+    sponsor: "GVC Gaesco",
+    amount: "60%",
     summary:
-      "Dos becas parciales del 50% para promover el talento internacional en finanzas, impulsadas por Crandon. Se solicita con el mismo formulario de admisión.",
+      "Para la promoción del talento femenino en finanzas. Una iniciativa de GVC Gaesco. El resultado se comunica a finales de septiembre. Se solicita con el mismo formulario de admisión.",
+    image: "/uploads/2023/11/BecaMAV.jpg",
+    imageAlt:
+      "Beca Maria Àngels Vallvé Ribera · Mujeres con talento · GVC Gaesco",
+    pdf: "/uploads/2025/06/beca-MA-Vallve-2025.pdf",
   },
   {
-    name: "Beca Maria Àngels Vallvé",
+    name: "Beca de excelencia Crandon",
+    tagline: "Potenciando el talento",
+    sponsor: "Crandon",
+    amount: "50%",
     summary:
-      "Beca de GVC Gaesco destinada a mujeres con interés en el sector financiero. Cubre el 60% del coste del máster 2026/27. Mismo trámite de admisión.",
+      "Crandon, empresa líder de gestión de Private Equity en Real Estate, ofrece dos becas a la excelencia. El resultado se comunica a finales de septiembre. Mismo trámite de admisión.",
+    image: "/uploads/2024/03/BecaCrandon.png",
+    imageAlt: "Beca de excelencia Crandon · Potenciando el talento",
+    logo: "/uploads/2024/11/CrandonLogooknegro_Mesadetrabajo11.png",
+    pdf: "/uploads/2025/12/Beca-CRANDON-UB-fintech-2026.pdf",
   },
 ] as const;
 
@@ -467,6 +481,6 @@ export const faqs = [
   },
   {
     q: "¿Cuánto cuesta y hay becas?",
-    a: "La matrícula de la edición 2026-27 es 5.480 €, con reserva de plaza de 900 € a cuenta. Hay becas Crandon y Maria Àngels Vallvé; se solicitan con el mismo formulario de admisión.",
+    a: "La matrícula de la edición 2026-27 es 5.480 €, con reserva de plaza de 900 € a cuenta. Hay becas Crandon (50%) y Maria Àngels Vallvé (60%); se solicitan con el mismo formulario de admisión.",
   },
 ] as const;

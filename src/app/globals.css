@@ -24,8 +24,6 @@
   --color-ub-paper: var(--ub-paper);
   --color-ub-line: var(--ub-line);
   --color-ub-gold: var(--ub-gold);
-  --font-sans: var(--font-sans);
-  --font-display: var(--font-display);
 }
 
 * {

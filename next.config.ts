@@ -8,6 +8,20 @@ const nextConfig: NextConfig = {
     ],
     formats: ["image/avif", "image/webp"],
   },
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: [
+          "**/node_modules/**",
+          "**/public/uploads/**",
+          "**/.git/**",
+          "**/.next/**",
+        ],
+      };
+    }
+    return config;
+  },
   async redirects() {
     return [
       {

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays, GraduationCap, MapPin } from "lucide-react";
 import { ButtonLink } from "@/components/ButtonLink";
 import { FadeIn } from "@/components/FadeIn";
+import { ProgramComparison } from "@/components/ProgramComparison";
 import { Section, SectionHeading } from "@/components/Section";
 import {
   audience,
@@ -166,13 +167,13 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-        <div className="relative mt-12 aspect-[21/9] overflow-hidden border border-ub-line">
+        <div className="relative mx-auto mt-10 aspect-[3/2] w-full max-w-2xl overflow-hidden border border-ub-line">
           <Image
-            src="/uploads/2026/05/Foto-definitiva-noticia-barcela-hub-master.jpg"
-            alt="Barcelona hub de innovación y fintech"
+            src="/uploads/2026/07/barcelona-sagrada-mar.png"
+            alt="Barcelona con la Sagrada Família, el mar Mediterráneo y la ciudad al atardecer"
             fill
-            className="object-cover"
-            sizes="100vw"
+            className="object-cover object-center"
+            sizes="(max-width: 672px) 100vw, 672px"
           />
         </div>
       </Section>
@@ -181,7 +182,7 @@ export default function HomePage() {
         <SectionHeading
           eyebrow="Certificaciones"
           title="Obtén titulaciones extra al realizar el Máster"
-          description="Además del título UB, podrás prepararte para certificaciones con reconocimiento europeo e internacional."
+          description="Además del título UB, el programa incluye los cursos de preparación para certificaciones con reconocimiento europeo e internacional. El coste de los exámenes certificativos no está incluido en la matrícula."
         />
         <div className="grid gap-6 lg:grid-cols-3">
           {certifications.map((item) => (
@@ -280,6 +281,10 @@ export default function HomePage() {
               </a>
             </p>
           </div>
+        </div>
+
+        <div className="mt-12">
+          <ProgramComparison />
         </div>
       </Section>
 
