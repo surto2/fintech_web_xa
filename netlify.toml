@@ -1,0 +1,29 @@
+[[redirects]]
+  from = "/alumni"
+  to = "https://app-master-ia-fintech.ub.edu/"
+  status = 302
+
+[[redirects]]
+  from = "/alumni/*"
+  to = "https://app-master-ia-fintech.ub.edu/"
+  status = 302
+
+[[redirects]]
+  from = "/inscripciones-y-ub"
+  to = "/inscripciones-y-becas"
+  status = 301
+
+[[redirects]]
+  from = "/plan-de-estudios"
+  to = "/plan-de-estudio"
+  status = 301
+
+[[redirects]]
+  from = "/tfms-e-investigacion"
+  to = "/investigacion-y-emprendimiento"
+  status = 301
+
+[[redirects]]
+  from = "/mundo-fintech"
+  to = "/noticias-master"
+  status = 301

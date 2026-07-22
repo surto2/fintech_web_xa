@@ -1,26 +1,106 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ub-blue: #0073cf;
+  --ub-blue-deep: #0057a0;
+  --ub-navy: #0b1f3a;
+  --ub-ink: #142033;
+  --ub-muted: #5a6b7f;
+  --ub-paper: #f5f8fc;
+  --ub-line: #d7e2ef;
+  --ub-gold: #c4a35a;
+  --background: var(--ub-paper);
+  --foreground: var(--ub-ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ub-blue: var(--ub-blue);
+  --color-ub-blue-deep: var(--ub-blue-deep);
+  --color-ub-navy: var(--ub-navy);
+  --color-ub-ink: var(--ub-ink);
+  --color-ub-muted: var(--ub-muted);
+  --color-ub-paper: var(--ub-paper);
+  --color-ub-line: var(--ub-line);
+  --color-ub-gold: var(--ub-gold);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--ub-blue) 28%, white);
+  color: var(--ub-navy);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.prose-news {
+  line-height: 1.75;
+  color: var(--ub-ink);
+}
+
+.prose-news h2,
+.prose-news h3 {
+  font-family: var(--font-display), Georgia, serif;
+  color: var(--ub-navy);
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.2;
+}
+
+.prose-news p {
+  margin: 0 0 1.1rem;
+}
+
+.prose-news img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.25rem;
+  margin: 1.5rem 0;
+}
+
+.prose-news a {
+  color: var(--ub-blue-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.prose-news ul,
+.prose-news ol {
+  padding-left: 1.25rem;
+  margin: 0 0 1.1rem;
+}
+
+.grain {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(0, 115, 207, 0.18), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 20%, rgba(196, 163, 90, 0.12), transparent 50%),
+    linear-gradient(180deg, #0b1f3a 0%, #123057 45%, #0b1f3a 100%);
+}
+
+.mesh {
+  background:
+    radial-gradient(circle at 10% 20%, rgba(0, 115, 207, 0.08), transparent 35%),
+    radial-gradient(circle at 90% 10%, rgba(11, 31, 58, 0.06), transparent 30%),
+    linear-gradient(180deg, #f5f8fc 0%, #eef3f9 100%);
 }

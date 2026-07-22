@@ -1,0 +1,14 @@
+{
+  "redirects": [
+    {
+      "source": "/alumni",
+      "destination": "https://app-master-ia-fintech.ub.edu/",
+      "permanent": false
+    },
+    {
+      "source": "/alumni/:path*",
+      "destination": "https://app-master-ia-fintech.ub.edu/",
+      "permanent": false
+    }
+  ]
+}

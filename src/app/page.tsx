@@ -1,103 +1,374 @@
 import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, CalendarDays, GraduationCap, MapPin } from "lucide-react";
+import { ButtonLink } from "@/components/ButtonLink";
+import { FadeIn } from "@/components/FadeIn";
+import { Section, SectionHeading } from "@/components/Section";
+import {
+  audience,
+  benefits,
+  certifications,
+  methodology,
+  partnerLogos,
+  whyUb,
+} from "@/lib/content";
+import { getLatestPosts } from "@/lib/posts";
+import { siteConfig } from "@/lib/site";
 
-export default function Home() {
+export default function HomePage() {
+  const posts = getLatestPosts(6);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
+    <>
+      <section className="relative min-h-[92vh] overflow-hidden text-white">
         <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
+          src="/uploads/2026/06/Foto-definitiva-chico-mirando-maquina-de-hacer-dinero.jpg"
+          alt="Máster Fintech Universitat de Barcelona"
+          fill
           priority
+          className="object-cover object-center"
+          sizes="100vw"
         />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+        <div className="absolute inset-0 bg-gradient-to-r from-ub-navy/95 via-ub-navy/78 to-ub-navy/35" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ub-navy via-transparent to-ub-navy/40" />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+        <div className="relative mx-auto flex min-h-[92vh] max-w-7xl flex-col justify-end px-4 pb-16 pt-28 md:px-6 md:pb-20">
+          <FadeIn>
+            <p className="text-xs font-semibold tracking-[0.28em] text-[#9cc7ef] uppercase">
+              Universitat de Barcelona · Edición {siteConfig.edition}
+            </p>
+            <h1 className="mt-4 max-w-4xl font-[family-name:var(--font-display)] text-4xl leading-[1.05] md:text-6xl lg:text-7xl">
+              Máster de Fintech, Blockchain y Mercados Financieros
+            </h1>
+            <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/80 md:text-lg">
+              Te convertirá en experto en la industria financiera que aplica nuevas
+              tecnologías a actividades financieras y de inversión. Formación
+              aplicada en Barcelona, con profesores del sector.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <ButtonLink href="/inscripciones-y-becas">
+                Preinscripción {siteConfig.edition}
+              </ButtonLink>
+              <ButtonLink href={siteConfig.planDocente} variant="ghost" external>
+                Plan docente PDF
+              </ButtonLink>
+              <ButtonLink href="/contacto" variant="light">
+                Solicitud de admisión
+              </ButtonLink>
+            </div>
+            <p className="mt-6 inline-flex items-center gap-2 rounded-sm border border-white/20 bg-white/10 px-3 py-2 text-sm backdrop-blur">
+              <span className="size-2 rounded-full bg-emerald-400" />
+              Abiertas plazas {siteConfig.edition}. Quedan{" "}
+              {siteConfig.seatsLeft} plazas libres.
+            </p>
+          </FadeIn>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+      </section>
+
+      <Section className="mesh !py-10 md:!py-12">
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            {
+              icon: GraduationCap,
+              label: `${siteConfig.ects} ECTS · ${siteConfig.price}`,
+            },
+            { icon: CalendarDays, label: siteConfig.schedule },
+            { icon: MapPin, label: "Campus Economía y Empresa · UB" },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="flex items-center gap-3 border border-ub-line bg-white/70 px-4 py-4"
+            >
+              <item.icon className="size-5 text-ub-blue" />
+              <p className="text-sm font-medium text-ub-navy">{item.label}</p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section>
+        <SectionHeading
+          eyebrow="Para quién"
+          title="Titulación dirigida a"
+          description="Una formación pensada tanto para quien llega al sector como para quien ya trabaja y necesita actualizarse."
+        />
+        <div className="grid gap-6 md:grid-cols-2">
+          {audience.map((item, i) => (
+            <FadeIn key={item.title} delay={i * 0.05}>
+              <article className="h-full border-l-2 border-ub-blue bg-white px-6 py-6">
+                <h3 className="font-[family-name:var(--font-display)] text-xl text-ub-navy">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-ub-muted">{item.text}</p>
+              </article>
+            </FadeIn>
+          ))}
+        </div>
+      </Section>
+
+      <Section className="bg-ub-navy text-white">
+        <SectionHeading
+          light
+          eyebrow="Metodología"
+          title="Global Mobility 360º"
+          description="Aprende en el aula, en plataformas digitales y en el ecosistema real de Barcelona."
+        />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {methodology.map((item, i) => (
+            <FadeIn key={item.title} delay={i * 0.06}>
+              <article className="h-full border border-white/15 bg-white/5 p-5 backdrop-blur-sm">
+                <p className="text-xs tracking-[0.2em] text-[#7eb6ea] uppercase">
+                  0{i + 1}
+                </p>
+                <h3 className="mt-3 font-[family-name:var(--font-display)] text-xl">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-white/70">
+                  {item.text}
+                </p>
+              </article>
+            </FadeIn>
+          ))}
+        </div>
+        <div className="mt-10">
+          <ButtonLink href="/plan-de-estudio" variant="light">
+            Ver plan de estudio <ArrowRight className="size-4" />
+          </ButtonLink>
+        </div>
+      </Section>
+
+      <Section className="mesh">
+        <div className="grid items-center gap-12 lg:grid-cols-2">
+          <div>
+            <SectionHeading
+              eyebrow="Barcelona · UB"
+              title="¿Por qué en la Universitat de Barcelona?"
+              description="Ciudad de acogida, con un ecosistema vivo, multicultural y con gran calidad de vida. La UB lidera los rankings españoles y te conecta con el hub Fintech del sur de Europa."
+            />
+            <ButtonLink
+              href="/noticias-master/de-barcelona-al-mundo"
+              variant="secondary"
+            >
+              Palabras de Alejandro Scasserra
+            </ButtonLink>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {whyUb.map((item) => (
+              <div
+                key={item.label}
+                className="border border-ub-line bg-white p-5"
+              >
+                <p className="font-[family-name:var(--font-display)] text-3xl text-ub-blue md:text-4xl">
+                  {item.value}
+                </p>
+                <p className="mt-2 text-sm text-ub-muted">{item.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="relative mt-12 aspect-[21/9] overflow-hidden border border-ub-line">
           <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+            src="/uploads/2026/05/Foto-definitiva-noticia-barcela-hub-master.jpg"
+            alt="Barcelona hub de innovación y fintech"
+            fill
+            className="object-cover"
+            sizes="100vw"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+        </div>
+      </Section>
+
+      <Section>
+        <SectionHeading
+          eyebrow="Certificaciones"
+          title="Obtén titulaciones extra al realizar el Máster"
+          description="Además del título UB, podrás prepararte para certificaciones con reconocimiento europeo e internacional."
+        />
+        <div className="grid gap-6 lg:grid-cols-3">
+          {certifications.map((item) => (
+            <article
+              key={item.title}
+              className="border border-ub-line bg-white p-6"
+            >
+              <h3 className="font-[family-name:var(--font-display)] text-xl text-ub-navy">
+                {item.title}
+              </h3>
+              <p className="mt-2 text-xs font-semibold tracking-wide text-ub-blue uppercase">
+                {item.issuer}
+              </p>
+              <p className="mt-3 text-sm leading-relaxed text-ub-muted">
+                {item.text}
+              </p>
+            </article>
+          ))}
+        </div>
+      </Section>
+
+      <Section className="bg-white">
+        <SectionHeading
+          eyebrow="Ecosistema"
+          title="Colaboran más de 20 empresas y start-ups"
+          description="Tus profesores serán CEOs y CFOs del sector. Conoce cómo trabaja una start-up por dentro y acelera tu carrera."
+        />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          {partnerLogos.map((logo) => (
+            <div
+              key={logo.name}
+              className="flex h-24 items-center justify-center border border-ub-line bg-ub-paper px-4 py-3"
+            >
+              <div className="relative h-12 w-full">
+                <Image
+                  src={logo.src}
+                  alt={`Logo ${logo.name}`}
+                  fill
+                  className="object-contain"
+                  sizes="160px"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-8">
+          <ButtonLink href="/practicas-y-empresas" variant="secondary">
+            Prácticas y empresas
+          </ButtonLink>
+        </div>
+      </Section>
+
+      <Section className="bg-ub-navy text-white">
+        <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <SectionHeading
+              light
+              eyebrow="Sinergias"
+              title="Fintech + Máster de IA aplicada a los Mercados Financieros"
+              description="Dos programas hermanos de la UB. Puedes cursarlos de forma consecutiva y convalidar 4 módulos comunes: ahorras tiempo, matrícula y ganas un perfil híbrido muy demandado."
+            />
+            <ul className="mb-8 space-y-2 text-sm text-white/75">
+              <li>· Grupos interdisciplinares con alumnos de ambos másteres</li>
+              <li>· Misma comunidad Alumni y red de empresas</li>
+              <li>· Opción de ampliar con el Postgrado de Data Scientist</li>
+            </ul>
+            <div className="flex flex-wrap gap-3">
+              <ButtonLink href={siteConfig.masterIaUrl} variant="light" external>
+                Visitar ub.edu/ai
+              </ButtonLink>
+              <ButtonLink href="/plan-de-estudio" variant="ghost">
+                Ver módulos comunes
+              </ButtonLink>
+            </div>
+          </div>
+          <div className="flex flex-col items-center justify-center gap-6 border border-white/15 bg-white/5 p-8">
+            <div className="relative h-16 w-48">
+              <Image
+                src="/uploads/2025/07/logo-master-IA-1.png"
+                alt="Logo Máster IA UB"
+                fill
+                className="object-contain"
+                sizes="192px"
+              />
+            </div>
+            <p className="text-center text-sm text-white/70">
+              Máster de Inteligencia Artificial aplicada a los Mercados
+              Financieros ·{" "}
+              <a
+                href={siteConfig.masterIaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9cc7ef] underline underline-offset-2"
+              >
+                https://ub.edu/ai/
+              </a>
+            </p>
+          </div>
+        </div>
+      </Section>
+
+      <Section>
+        <SectionHeading
+          eyebrow="Ventajas alumno"
+          title="Por ser alumno del Máster, tendrás descuentos exclusivos"
+        />
+        <div className="grid gap-6 md:grid-cols-3">
+          {benefits.map((b) => (
+            <article key={b.title} className="bg-ub-navy p-6 text-white">
+              <h3 className="font-[family-name:var(--font-display)] text-xl">
+                {b.title}
+              </h3>
+              <p className="mt-3 text-sm text-white/70">{b.text}</p>
+            </article>
+          ))}
+        </div>
+      </Section>
+
+      <Section className="bg-white">
+        <div className="mb-10 flex items-end justify-between gap-4">
+          <SectionHeading
+            eyebrow="Actualidad"
+            title="Conoce nuestras novedades"
+            description="Noticias del máster, del ecosistema Fintech y de Barcelona."
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <Link
+            href="/noticias-master"
+            className="hidden text-sm font-medium text-ub-blue hover:text-ub-blue-deep md:inline-flex"
+          >
+            Ver todas
+          </Link>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {posts.map((post) => (
+            <Link
+              key={post.slug}
+              href={`/noticias-master/${post.slug}`}
+              className="group overflow-hidden border border-ub-line bg-ub-paper transition hover:border-ub-blue/40"
+            >
+              <div className="relative aspect-[16/10] overflow-hidden bg-ub-navy/10">
+                {post.featuredImage ? (
+                  <Image
+                    src={post.featuredImage}
+                    alt={post.title}
+                    fill
+                    className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                  />
+                ) : null}
+              </div>
+              <div className="p-5">
+                <p className="text-xs tracking-wide text-ub-muted uppercase">
+                  {post.date}
+                </p>
+                <h3 className="mt-2 font-[family-name:var(--font-display)] text-lg leading-snug text-ub-navy group-hover:text-ub-blue">
+                  {post.title}
+                </h3>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </Section>
+
+      <Section className="grain text-white">
+        <div className="max-w-3xl">
+          <p className="text-xs tracking-[0.24em] text-white/60 uppercase">
+            Admisión {siteConfig.edition}
+          </p>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl md:text-5xl">
+            Desbloquea tu potencial en Fintech
+          </h2>
+          <p className="mt-5 text-white/75 md:text-lg">
+            Herramientas para idear, reflexionar y debatir desde una vertiente
+            internacional. Network exclusivo, soft skills y consultores que te
+            ayudan a encarar tu carrera profesional. Matrícula:{" "}
+            {siteConfig.price}.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <ButtonLink href="/inscripciones-y-becas">
+              Inscripciones y becas
+            </ButtonLink>
+            <ButtonLink href="/contacto" variant="ghost">
+              Contactar dirección
+            </ButtonLink>
+          </div>
+        </div>
+      </Section>
+    </>
   );
 }
