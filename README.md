@@ -49,7 +49,10 @@ Abre [http://localhost:3000/admin](http://localhost:3000/admin).
 Desde el admin puedes:
 
 1. Crear / editar / eliminar noticias
-2. Actualizar plazas, precio, fechas y contacto
+2. Subir imágenes (destacada o dentro del HTML) a `public/uploads/YYYY/MM/`
+3. Actualizar plazas, precio, fechas y contacto
+
+Los cambios se escriben en `content/posts.json` y `content/site-settings.json`. Con `GITHUB_TOKEN` también se hace commit (incluidas las imágenes) para que Vercel redespliegue.
 
 ## Alumni
 

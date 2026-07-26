@@ -20,7 +20,15 @@ export function AdminLoginForm() {
     });
     setLoading(false);
     if (!res.ok) {
-      setError("Contraseña incorrecta");
+      const data = (await res.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      setError(
+        data?.error ||
+          (res.status === 429
+            ? "Demasiados intentos. Prueba más tarde."
+            : "Contraseña incorrecta")
+      );
       return;
     }
     router.refresh();
