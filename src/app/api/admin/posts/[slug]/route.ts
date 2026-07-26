@@ -43,6 +43,12 @@ export async function PUT(request: Request, ctx: Ctx) {
 
   posts[idx] = updated;
   const result = await writePostsFile(posts, `Admin: actualizar ${slug}`);
+  if (!result.committed && !result.local) {
+    return NextResponse.json(
+      { error: result.error || "No se pudo guardar" },
+      { status: 500 }
+    );
+  }
   return NextResponse.json({ post: updated, ...result });
 }
 
@@ -58,5 +64,11 @@ export async function DELETE(_request: Request, ctx: Ctx) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   const result = await writePostsFile(next, `Admin: eliminar ${slug}`);
+  if (!result.committed && !result.local) {
+    return NextResponse.json(
+      { error: result.error || "No se pudo eliminar" },
+      { status: 500 }
+    );
+  }
   return NextResponse.json({ ok: true, ...result });
 }

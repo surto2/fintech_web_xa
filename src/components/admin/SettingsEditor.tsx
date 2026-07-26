@@ -18,23 +18,33 @@ export function SettingsEditor({ settings }: { settings: SiteSettings }) {
     e.preventDefault();
     setLoading(true);
     setStatus("");
-    const res = await fetch("/api/admin/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) {
-      setStatus(data.error || "Error al guardar");
-      return;
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = (await res.json().catch(() => null)) as {
+        error?: string;
+        committed?: boolean;
+      } | null;
+      if (!res.ok) {
+        setStatus(data?.error || `Error al guardar (${res.status})`);
+        return;
+      }
+      setStatus(
+        data?.committed
+          ? "Guardado y enviado a GitHub."
+          : "Guardado en local. Reinicia el servidor o haz push para verlo en la web."
+      );
+      router.refresh();
+    } catch (err) {
+      setStatus(
+        err instanceof Error ? err.message : "Error de red al guardar"
+      );
+    } finally {
+      setLoading(false);
     }
-    setStatus(
-      data.committed
-        ? "Guardado y enviado a GitHub."
-        : "Guardado en local. Reinicia el servidor o haz push para verlo en la web."
-    );
-    router.refresh();
   }
 
   return (

@@ -32,5 +32,11 @@ export async function PUT(request: Request) {
     settings,
     "Admin: actualizar datos del sitio"
   );
+  if (!result.committed && !result.local) {
+    return NextResponse.json(
+      { error: result.error || "No se pudo guardar" },
+      { status: 500 }
+    );
+  }
   return NextResponse.json({ settings, ...result });
 }

@@ -59,5 +59,11 @@ export async function POST(request: Request) {
 
   posts.unshift(post);
   const result = await writePostsFile(posts, `Admin: nueva noticia ${slug}`);
+  if (!result.committed && !result.local) {
+    return NextResponse.json(
+      { error: result.error || "No se pudo guardar" },
+      { status: 500 }
+    );
+  }
   return NextResponse.json({ post, ...result });
 }

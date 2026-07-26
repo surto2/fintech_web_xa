@@ -118,30 +118,41 @@ export function PostEditor({ mode, post }: Props) {
       html,
     };
 
-    const res = await fetch(
-      mode === "create" ? "/api/admin/posts" : `/api/admin/posts/${post.slug}`,
-      {
-        method: mode === "create" ? "POST" : "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+    try {
+      const res = await fetch(
+        mode === "create" ? "/api/admin/posts" : `/api/admin/posts/${post.slug}`,
+        {
+          method: mode === "create" ? "POST" : "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      const data = (await res.json().catch(() => null)) as {
+        error?: string;
+        committed?: boolean;
+        post?: { slug?: string };
+      } | null;
+      if (!res.ok) {
+        setStatus(data?.error || `Error al guardar (${res.status})`);
+        return;
       }
-    );
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) {
-      setStatus(data.error || "Error al guardar");
-      return;
-    }
-    setStatus(
-      data.committed
-        ? "Guardado y enviado a GitHub (Vercel redesplegará)."
-        : "Guardado en local. Reinicia el servidor o haz push para publicar."
-    );
-    if (mode === "create" && data.post?.slug) {
-      router.push(`/admin/posts/${data.post.slug}`);
-      router.refresh();
-    } else {
-      router.refresh();
+      setStatus(
+        data?.committed
+          ? "Guardado y enviado a GitHub (Vercel redesplegará)."
+          : "Guardado en local. Reinicia el servidor o haz push para publicar."
+      );
+      if (mode === "create" && data?.post?.slug) {
+        router.push(`/admin/posts/${data.post.slug}`);
+        router.refresh();
+      } else {
+        router.refresh();
+      }
+    } catch (err) {
+      setStatus(
+        err instanceof Error ? err.message : "Error de red al guardar"
+      );
+    } finally {
+      setLoading(false);
     }
   }
 
