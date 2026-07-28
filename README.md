@@ -48,11 +48,11 @@ Abre [http://localhost:3000/admin](http://localhost:3000/admin).
 
 Desde el admin puedes:
 
-1. Crear / editar / eliminar noticias
-2. Subir imágenes (destacada o dentro del HTML) a `public/uploads/YYYY/MM/`
+1. Crear / editar / eliminar noticias (editor visual con párrafos, negrita, enlaces e imágenes)
+2. Publicar texto + imágenes en **un solo deploy**
 3. Actualizar plazas, precio, fechas y contacto
 
-Los cambios se escriben en `content/posts.json` y `content/site-settings.json`. Con `GITHUB_TOKEN` también se hace commit (incluidas las imágenes) para que Vercel redespliegue.
+Los cambios van a `content/posts.json` y `public/uploads/…`. Con `GITHUB_TOKEN` se hace un commit único a GitHub y Vercel redespliega una vez.
 
 ## Alumni
 

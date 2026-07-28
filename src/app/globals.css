@@ -70,11 +70,25 @@ a {
   margin: 0 0 1.1rem;
 }
 
+.prose-news br {
+  display: block;
+  content: "";
+  margin-top: 0.35rem;
+}
+
+.prose-news figure {
+  margin: 1.5rem 0;
+}
+
 .prose-news img {
   max-width: 100%;
   height: auto;
   border-radius: 0.25rem;
   margin: 1.5rem 0;
+}
+
+.prose-news figure img {
+  margin: 0;
 }
 
 .prose-news a {

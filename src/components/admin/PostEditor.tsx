@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Post } from "@/lib/posts";
+import { normalizeArticleHtml } from "@/lib/article-html";
 
 type Props =
   | { mode: "create"; post?: undefined }
@@ -11,105 +12,107 @@ type Props =
 const fieldClass =
   "w-full border border-ub-line bg-white px-3 py-2 outline-none focus:border-ub-blue";
 
+const toolbarBtn =
+  "border border-ub-line bg-ub-paper px-2.5 py-1.5 text-sm text-ub-navy hover:border-ub-blue disabled:opacity-50";
+
 export function PostEditor({ mode, post }: Props) {
   const router = useRouter();
-  const htmlRef = useRef<HTMLTextAreaElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const pendingFiles = useRef(new Map<string, File>());
   const [title, setTitle] = useState(post?.title || "");
-  const [slug, setSlug] = useState(post?.slug || "");
   const [date, setDate] = useState(
     post?.date || new Date().toISOString().slice(0, 10)
   );
   const [excerpt, setExcerpt] = useState(post?.excerpt || "");
   const [featuredImage, setFeaturedImage] = useState(post?.featuredImage || "");
+  const [featuredPreview, setFeaturedPreview] = useState(
+    post?.featuredImage || ""
+  );
   const [seoTitle, setSeoTitle] = useState(post?.seoTitle || "");
   const [seoDescription, setSeoDescription] = useState(
     post?.seoDescription || ""
   );
-  const [html, setHtml] = useState(
-    post?.html || "<p>Escribe aquí el contenido de la noticia…</p>"
-  );
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState<"featured" | "content" | null>(
-    null
-  );
 
-  async function uploadImage(file: File) {
-    const body = new FormData();
-    body.append("file", file);
-    const res = await fetch("/api/admin/upload", { method: "POST", body });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || "Error al subir la imagen");
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    el.innerHTML = normalizeArticleHtml(
+      post?.html || "<p>Escribe aquí el contenido de la noticia…</p>"
+    );
+    try {
+      document.execCommand("defaultParagraphSeparator", false, "p");
+    } catch {
+      /* ignore */
     }
-    return data as { url: string; committed: boolean; error?: string };
+  }, [post?.html]);
+
+  function newPendingId() {
+    return `pending:${crypto.randomUUID()}`;
+  }
+
+  function exec(cmd: string, value?: string) {
+    bodyRef.current?.focus();
+    document.execCommand(cmd, false, value);
+  }
+
+  function onBodyPaste(e: React.ClipboardEvent<HTMLDivElement>) {
+    e.preventDefault();
+    const text = e.clipboardData.getData("text/plain");
+    const html = normalizeArticleHtml(text);
+    document.execCommand("insertHTML", false, html);
   }
 
   async function onFeaturedFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    setUploading("featured");
-    setStatus("");
-    try {
-      const data = await uploadImage(file);
-      setFeaturedImage(data.url);
-      setStatus(
-        data.committed
-          ? "Imagen destacada subida y enviada a GitHub."
-          : data.error
-            ? `Imagen guardada en local (GitHub: ${data.error}).`
-            : "Imagen destacada guardada en local."
-      );
-    } catch (err) {
-      setStatus(err instanceof Error ? err.message : "Error al subir");
-    } finally {
-      setUploading(null);
+    if (featuredImage.startsWith("pending:")) {
+      pendingFiles.current.delete(featuredImage);
     }
+    const id = newPendingId();
+    pendingFiles.current.set(id, file);
+    setFeaturedImage(id);
+    setFeaturedPreview(URL.createObjectURL(file));
+    setStatus("Imagen destacada lista. Se publicará al guardar.");
   }
 
   async function onContentFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    setUploading("content");
-    setStatus("");
-    try {
-      const data = await uploadImage(file);
-      const tag = `\n<figure><img src="${data.url}" alt="" /></figure>\n`;
-      const el = htmlRef.current;
-      if (el) {
-        const start = el.selectionStart ?? html.length;
-        const end = el.selectionEnd ?? html.length;
-        const next = html.slice(0, start) + tag + html.slice(end);
-        setHtml(next);
-        requestAnimationFrame(() => {
-          el.focus();
-          const pos = start + tag.length;
-          el.setSelectionRange(pos, pos);
-        });
-      } else {
-        setHtml((prev) => prev + tag);
-      }
-      setStatus(
-        data.committed
-          ? "Imagen insertada en el contenido y enviada a GitHub."
-          : "Imagen insertada en el contenido (local)."
-      );
-    } catch (err) {
-      setStatus(err instanceof Error ? err.message : "Error al subir");
-    } finally {
-      setUploading(null);
-    }
+    const id = newPendingId();
+    pendingFiles.current.set(id, file);
+    const preview = URL.createObjectURL(file);
+    bodyRef.current?.focus();
+    document.execCommand(
+      "insertHTML",
+      false,
+      `<figure><img src="${preview}" data-pending="${id}" alt="" /></figure><p></p>`
+    );
+    setStatus("Imagen insertada. Se publicará al guardar.");
+  }
+
+  function readBodyHtml() {
+    const el = bodyRef.current;
+    if (!el) return "";
+    const clone = el.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll("img[data-pending]").forEach((img) => {
+      const id = img.getAttribute("data-pending");
+      if (id) img.setAttribute("src", id);
+      img.removeAttribute("data-pending");
+    });
+    return normalizeArticleHtml(clone.innerHTML);
   }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setStatus("");
+    const html = readBodyHtml();
     const payload = {
       title,
-      slug: slug || undefined,
       date,
       excerpt,
       featuredImage: featuredImage || null,
@@ -119,13 +122,17 @@ export function PostEditor({ mode, post }: Props) {
     };
 
     try {
+      const form = new FormData();
+      form.append("payload", JSON.stringify(payload));
+      for (const [id, file] of pendingFiles.current.entries()) {
+        if (html.includes(id) || featuredImage === id) {
+          form.append(id, file, file.name);
+        }
+      }
+
       const res = await fetch(
         mode === "create" ? "/api/admin/posts" : `/api/admin/posts/${post.slug}`,
-        {
-          method: mode === "create" ? "POST" : "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
+        { method: mode === "create" ? "POST" : "PUT", body: form }
       );
       const data = (await res.json().catch(() => null)) as {
         error?: string;
@@ -136,10 +143,11 @@ export function PostEditor({ mode, post }: Props) {
         setStatus(data?.error || `Error al guardar (${res.status})`);
         return;
       }
+      pendingFiles.current.clear();
       setStatus(
         data?.committed
-          ? "Guardado y enviado a GitHub (Vercel redesplegará)."
-          : "Guardado en local. Reinicia el servidor o haz push para publicar."
+          ? "Publicado (un solo deploy en Vercel)."
+          : "Guardado en local."
       );
       if (mode === "create" && data?.post?.slug) {
         router.push(`/admin/posts/${data.post.slug}`);
@@ -159,19 +167,20 @@ export function PostEditor({ mode, post }: Props) {
   async function remove() {
     if (!post || !confirm("¿Eliminar esta noticia?")) return;
     setLoading(true);
-    const res = await fetch(`/api/admin/posts/${post.slug}`, {
-      method: "DELETE",
-    });
-    setLoading(false);
-    if (!res.ok) {
-      setStatus("No se pudo eliminar");
-      return;
+    try {
+      const res = await fetch(`/api/admin/posts/${post.slug}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        setStatus("No se pudo eliminar");
+        return;
+      }
+      router.push("/admin/posts");
+      router.refresh();
+    } finally {
+      setLoading(false);
     }
-    router.push("/admin/posts");
-    router.refresh();
   }
-
-  const busy = loading || uploading !== null;
 
   return (
     <form
@@ -187,15 +196,6 @@ export function PostEditor({ mode, post }: Props) {
         />
       </Field>
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Slug (URL)">
-          <input
-            className={fieldClass}
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            placeholder="se-genera-solo"
-            disabled={mode === "edit"}
-          />
-        </Field>
         <Field label="Fecha">
           <input
             className={fieldClass}
@@ -205,101 +205,145 @@ export function PostEditor({ mode, post }: Props) {
             required
           />
         </Field>
-      </div>
-      <Field label="Extracto">
-        <textarea
-          className={`${fieldClass} min-h-20`}
-          value={excerpt}
-          onChange={(e) => setExcerpt(e.target.value)}
-        />
-      </Field>
-      <div className="space-y-2">
-        <Field label="Imagen destacada (ruta o URL)">
+        <Field label="Extracto (opcional, para el listado)">
           <input
             className={fieldClass}
-            value={featuredImage}
-            onChange={(e) => setFeaturedImage(e.target.value)}
-            placeholder="/uploads/2026/07/foto.jpg"
+            value={excerpt}
+            onChange={(e) => setExcerpt(e.target.value)}
+            placeholder="Si lo dejas vacío, se genera del texto"
           />
         </Field>
+      </div>
+
+      <div className="space-y-2">
+        <span className="mb-1 block text-sm text-ub-muted">
+          Imagen destacada
+        </span>
         <div className="flex flex-wrap items-center gap-3">
-          <label className="cursor-pointer border border-ub-line bg-ub-paper px-3 py-2 text-sm text-ub-navy hover:border-ub-blue">
-            {uploading === "featured" ? "Subiendo…" : "Subir imagen destacada"}
+          <label className={`cursor-pointer ${toolbarBtn}`}>
+            Elegir imagen
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
               className="hidden"
-              disabled={busy}
+              disabled={loading}
               onChange={onFeaturedFile}
             />
           </label>
-          {featuredImage ? (
+          {featuredPreview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={featuredImage}
+              src={featuredPreview}
               alt=""
               className="h-16 w-24 border border-ub-line object-cover"
             />
-          ) : null}
+          ) : (
+            <span className="text-sm text-ub-muted">Sin imagen</span>
+          )}
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label="SEO title (opcional)">
-          <input
-            className={fieldClass}
-            value={seoTitle}
-            onChange={(e) => setSeoTitle(e.target.value)}
-          />
-        </Field>
-        <Field label="SEO description (opcional)">
-          <input
-            className={fieldClass}
-            value={seoDescription}
-            onChange={(e) => setSeoDescription(e.target.value)}
-          />
-        </Field>
-      </div>
+
       <div className="space-y-2">
-        <Field label="Contenido (HTML)">
-          <textarea
-            ref={htmlRef}
-            className={`${fieldClass} min-h-64 font-mono text-sm`}
-            value={html}
-            onChange={(e) => setHtml(e.target.value)}
-            required
-          />
-        </Field>
-        <label className="inline-block cursor-pointer border border-ub-line bg-ub-paper px-3 py-2 text-sm text-ub-navy hover:border-ub-blue">
-          {uploading === "content"
-            ? "Subiendo…"
-            : "Insertar imagen en el contenido"}
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            className="hidden"
-            disabled={busy}
-            onChange={onContentFile}
-          />
-        </label>
+        <span className="block text-sm text-ub-muted">Contenido</span>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className={toolbarBtn}
+            onClick={() => exec("formatBlock", "p")}
+          >
+            Párrafo
+          </button>
+          <button
+            type="button"
+            className={toolbarBtn}
+            onClick={() => exec("formatBlock", "h2")}
+          >
+            Subtítulo
+          </button>
+          <button
+            type="button"
+            className={toolbarBtn}
+            onClick={() => exec("bold")}
+          >
+            Negrita
+          </button>
+          <button
+            type="button"
+            className={toolbarBtn}
+            onClick={() => {
+              const url = window.prompt("URL del enlace");
+              if (url) exec("createLink", url);
+            }}
+          >
+            Enlace
+          </button>
+          <button
+            type="button"
+            className={toolbarBtn}
+            onClick={() => exec("insertUnorderedList")}
+          >
+            Lista
+          </button>
+          <label className={`cursor-pointer ${toolbarBtn}`}>
+            Imagen
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              disabled={loading}
+              onChange={onContentFile}
+            />
+          </label>
+        </div>
+        <div
+          ref={bodyRef}
+          contentEditable
+          suppressContentEditableWarning
+          onPaste={onBodyPaste}
+          className={`${fieldClass} prose-news min-h-72 overflow-auto`}
+        />
+        <p className="text-xs text-ub-muted">
+          Pulsa Enter para nuevo párrafo. Al pegar texto se respetan los
+          espacios. Las imágenes se publican junto al artículo (un solo deploy).
+        </p>
       </div>
-      <p className="text-xs text-ub-muted">
-        Imágenes: JPG, PNG, WebP o GIF · máx. 5 MB. Se guardan en /uploads/…
-        También puedes pegar HTML básico: p, h2, a, img, listas.
-      </p>
+
+      <details className="rounded border border-ub-line p-3">
+        <summary className="cursor-pointer text-sm text-ub-muted">
+          SEO (opcional)
+        </summary>
+        <div className="mt-3 grid gap-4 md:grid-cols-2">
+          <Field label="SEO title">
+            <input
+              className={fieldClass}
+              value={seoTitle}
+              onChange={(e) => setSeoTitle(e.target.value)}
+            />
+          </Field>
+          <Field label="SEO description">
+            <input
+              className={fieldClass}
+              value={seoDescription}
+              onChange={(e) => setSeoDescription(e.target.value)}
+            />
+          </Field>
+        </div>
+      </details>
+
       {status ? <p className="text-sm text-ub-blue">{status}</p> : null}
       <div className="flex flex-wrap gap-3">
         <button
           type="submit"
-          disabled={busy}
+          disabled={loading}
           className="bg-ub-navy px-4 py-2.5 text-sm font-medium text-white hover:bg-ub-blue-deep disabled:opacity-60"
         >
-          {loading ? "Guardando…" : "Guardar"}
+          {loading ? "Publicando…" : "Publicar"}
         </button>
         {mode === "edit" ? (
           <button
             type="button"
             onClick={remove}
-            disabled={busy}
+            disabled={loading}
             className="border border-red-300 px-4 py-2.5 text-sm text-red-700 hover:bg-red-50"
           >
             Eliminar

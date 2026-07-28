@@ -2,6 +2,9 @@ import { promises as fs } from "fs";
 import path from "path";
 import type { Post } from "@/lib/posts";
 import type { SiteSettings } from "@/lib/site";
+import { plainTextFromHtml } from "@/lib/article-html";
+
+export { plainTextFromHtml, normalizeArticleHtml } from "@/lib/article-html";
 
 const root = process.cwd();
 const postsPath = path.join(root, "content", "posts.json");
@@ -23,111 +26,199 @@ export type WriteResult = {
   error?: string;
 };
 
+export type RepoWriteFile = {
+  absolutePath: string;
+  content: string | Buffer;
+};
+
+function githubConfig() {
+  const token = process.env.GITHUB_TOKEN;
+  const repo = process.env.GITHUB_REPO || "surto2/fintech_web_xa";
+  const branch = process.env.GITHUB_BRANCH || "main";
+  return { token, repo, branch };
+}
+
+function githubHeaders(token: string) {
+  return {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+}
+
 async function tryLocalWrite(filePath: string, content: string | Buffer) {
   try {
     await fs.mkdir(path.dirname(filePath), { recursive: true });
     await fs.writeFile(filePath, content);
     return true;
   } catch (error) {
-    // En Vercel el filesystem es de solo lectura: es esperado.
     console.error("Local write skipped:", error);
     return false;
   }
 }
 
-async function commitToGitHub(
-  filePath: string,
-  content: string | Buffer,
+function toRepoPath(absolutePath: string) {
+  const apiPath = path.relative(root, absolutePath).split(path.sep).join("/");
+  if (!apiPath || apiPath.startsWith("..")) {
+    throw new Error(`Ruta inválida para GitHub: ${absolutePath}`);
+  }
+  return apiPath;
+}
+
+/** Un solo commit de GitHub con varios archivos (evita doble deploy). */
+async function commitFilesToGitHub(
+  files: RepoWriteFile[],
   message: string
 ): Promise<{ committed: true } | { committed: false; error: string }> {
-  const token = process.env.GITHUB_TOKEN;
-  const repo = process.env.GITHUB_REPO || "surto2/fintech_web_xa";
+  const { token, repo, branch } = githubConfig();
   if (!token) {
-    return {
-      committed: false,
-      error: "Falta GITHUB_TOKEN en el entorno",
-    };
+    return { committed: false, error: "Falta GITHUB_TOKEN en el entorno" };
   }
+  if (!files.length) return { committed: true };
 
-  const apiPath = path.relative(root, filePath).split(path.sep).join("/");
-  if (!apiPath || apiPath.startsWith("..")) {
-    return { committed: false, error: `Ruta inválida para GitHub: ${filePath}` };
-  }
+  const headers = githubHeaders(token);
+  const signal = AbortSignal.timeout(55_000);
+  const base = `https://api.github.com/repos/${repo}`;
 
-  const url = `https://api.github.com/repos/${repo}/contents/${apiPath}`;
-  const headers = {
-    Authorization: `Bearer ${token}`,
-    Accept: "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28",
-  };
-
-  const signal = AbortSignal.timeout(25_000);
-
-  let sha: string | undefined;
   try {
-    const current = await fetch(url, { headers, cache: "no-store", signal });
-    if (current.ok) {
-      const data = (await current.json()) as { sha: string };
-      sha = data.sha;
+    const refRes = await fetch(`${base}/git/ref/heads/${branch}`, {
+      headers,
+      cache: "no-store",
+      signal,
+    });
+    if (!refRes.ok) {
+      return {
+        committed: false,
+        error: `GitHub ref failed: ${refRes.status} ${await refRes.text()}`,
+      };
     }
-  } catch (error) {
-    return {
-      committed: false,
-      error: `GitHub GET timeout/error: ${String(error)}`,
-    };
-  }
+    const refData = (await refRes.json()) as { object: { sha: string } };
+    const latestCommitSha = refData.object.sha;
 
-  const encoded = Buffer.isBuffer(content)
-    ? content.toString("base64")
-    : Buffer.from(content, "utf8").toString("base64");
+    const commitRes = await fetch(
+      `${base}/git/commits/${latestCommitSha}`,
+      { headers, cache: "no-store", signal }
+    );
+    if (!commitRes.ok) {
+      return {
+        committed: false,
+        error: `GitHub commit read failed: ${commitRes.status} ${await commitRes.text()}`,
+      };
+    }
+    const commitData = (await commitRes.json()) as { tree: { sha: string } };
 
-  try {
-    const res = await fetch(url, {
-      method: "PUT",
+    const treeItems: {
+      path: string;
+      mode: "100644";
+      type: "blob";
+      sha: string;
+    }[] = [];
+
+    for (const file of files) {
+      const encoded = Buffer.isBuffer(file.content)
+        ? file.content.toString("base64")
+        : Buffer.from(file.content, "utf8").toString("base64");
+      const blobRes = await fetch(`${base}/git/blobs`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ content: encoded, encoding: "base64" }),
+        signal,
+      });
+      if (!blobRes.ok) {
+        return {
+          committed: false,
+          error: `GitHub blob failed: ${blobRes.status} ${await blobRes.text()}`,
+        };
+      }
+      const blob = (await blobRes.json()) as { sha: string };
+      treeItems.push({
+        path: toRepoPath(file.absolutePath),
+        mode: "100644",
+        type: "blob",
+        sha: blob.sha,
+      });
+    }
+
+    const treeRes = await fetch(`${base}/git/trees`, {
+      method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({
-        message,
-        content: encoded,
-        sha,
-        branch: process.env.GITHUB_BRANCH || "main",
+        base_tree: commitData.tree.sha,
+        tree: treeItems,
       }),
       signal,
     });
-
-    if (!res.ok) {
-      const err = await res.text();
+    if (!treeRes.ok) {
       return {
         committed: false,
-        error: `GitHub commit failed: ${res.status} ${err}`,
+        error: `GitHub tree failed: ${treeRes.status} ${await treeRes.text()}`,
       };
     }
-  } catch (error) {
-    return {
-      committed: false,
-      error: `GitHub PUT timeout/error: ${String(error)}`,
-    };
-  }
+    const tree = (await treeRes.json()) as { sha: string };
 
-  return { committed: true };
+    const newCommitRes = await fetch(`${base}/git/commits`, {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        tree: tree.sha,
+        parents: [latestCommitSha],
+      }),
+      signal,
+    });
+    if (!newCommitRes.ok) {
+      return {
+        committed: false,
+        error: `GitHub create commit failed: ${newCommitRes.status} ${await newCommitRes.text()}`,
+      };
+    }
+    const newCommit = (await newCommitRes.json()) as { sha: string };
+
+    const updateRes = await fetch(`${base}/git/refs/heads/${branch}`, {
+      method: "PATCH",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ sha: newCommit.sha }),
+      signal,
+    });
+    if (!updateRes.ok) {
+      return {
+        committed: false,
+        error: `GitHub update ref failed: ${updateRes.status} ${await updateRes.text()}`,
+      };
+    }
+
+    return { committed: true };
+  } catch (error) {
+    return { committed: false, error: `GitHub error: ${String(error)}` };
+  }
 }
 
 function finalizeWrite(
   local: boolean,
   github: { committed: true } | { committed: false; error: string }
 ): WriteResult {
-  if (github.committed) {
-    return { committed: true, local };
-  }
-  if (local) {
-    return { committed: false, local: true, error: github.error };
-  }
+  if (github.committed) return { committed: true, local };
+  if (local) return { committed: false, local: true, error: github.error };
   return {
     committed: false,
     local: false,
     error:
       github.error ||
-      "No se pudo guardar. En Vercel el disco es de solo lectura: configura GITHUB_TOKEN con permiso Contents: Write.",
+      "No se pudo guardar. En Vercel hace falta GITHUB_TOKEN con Contents: Write.",
   };
+}
+
+export async function writeRepoFiles(
+  files: RepoWriteFile[],
+  message: string
+): Promise<WriteResult> {
+  let localOk = true;
+  for (const file of files) {
+    const ok = await tryLocalWrite(file.absolutePath, file.content);
+    if (!ok) localOk = false;
+  }
+  const github = await commitFilesToGitHub(files, message);
+  return finalizeWrite(localOk, github);
 }
 
 export async function readPostsFile(): Promise<Post[]> {
@@ -140,9 +231,7 @@ export async function writePostsFile(
   message: string
 ): Promise<WriteResult> {
   const content = `${JSON.stringify(posts, null, 2)}\n`;
-  const local = await tryLocalWrite(postsPath, content);
-  const github = await commitToGitHub(postsPath, content, message);
-  return finalizeWrite(local, github);
+  return writeRepoFiles([{ absolutePath: postsPath, content }], message);
 }
 
 export async function readSettingsFile(): Promise<SiteSettings> {
@@ -155,9 +244,7 @@ export async function writeSettingsFile(
   message: string
 ): Promise<WriteResult> {
   const content = `${JSON.stringify(settings, null, 2)}\n`;
-  const local = await tryLocalWrite(settingsPath, content);
-  const github = await commitToGitHub(settingsPath, content, message);
-  return finalizeWrite(local, github);
+  return writeRepoFiles([{ absolutePath: settingsPath, content }], message);
 }
 
 export function slugify(input: string) {
@@ -170,15 +257,6 @@ export function slugify(input: string) {
     .slice(0, 80);
 }
 
-export function plainTextFromHtml(html: string) {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 export function extensionForMime(mime: string) {
   return ALLOWED_UPLOAD_TYPES[mime] || null;
 }
@@ -187,16 +265,18 @@ export function isAllowedUploadMime(mime: string) {
   return mime in ALLOWED_UPLOAD_TYPES;
 }
 
-/** Guarda una imagen en public/uploads/YYYY/MM y, si hay token, la sube a GitHub. */
-export async function saveUploadedImage(file: {
+export function postsFilePath() {
+  return postsPath;
+}
+
+/** Prepara ruta/buffer de imagen sin hacer commit (se agrupa al guardar el post). */
+export async function prepareUploadFile(file: {
   buffer: Buffer;
   mime: string;
   originalName: string;
 }) {
   const ext = extensionForMime(file.mime);
-  if (!ext) {
-    throw new Error("Tipo de archivo no permitido");
-  }
+  if (!ext) throw new Error("Tipo de archivo no permitido");
   if (file.buffer.byteLength > MAX_UPLOAD_BYTES) {
     throw new Error("La imagen supera el límite de 5 MB");
   }
@@ -211,7 +291,6 @@ export async function saveUploadedImage(file: {
   let filename = `${base}${ext}`;
   let absolute = path.join(dir, filename);
   let n = 2;
-  // Evitar colisiones si el disco es escribible
   while (true) {
     try {
       await fs.access(absolute);
@@ -222,16 +301,26 @@ export async function saveUploadedImage(file: {
     }
   }
 
-  const local = await tryLocalWrite(absolute, file.buffer);
-  const publicUrl = `/uploads/${year}/${month}/${filename}`;
-  const github = await commitToGitHub(
-    absolute,
-    file.buffer,
-    `Admin: subir imagen ${publicUrl}`
+  return {
+    absolutePath: absolute,
+    publicUrl: `/uploads/${year}/${month}/${filename}`,
+    buffer: file.buffer,
+  };
+}
+
+/** @deprecated Preferir guardar imágenes junto al post (un solo deploy). */
+export async function saveUploadedImage(file: {
+  buffer: Buffer;
+  mime: string;
+  originalName: string;
+}) {
+  const planned = await prepareUploadFile(file);
+  const result = await writeRepoFiles(
+    [{ absolutePath: planned.absolutePath, content: planned.buffer }],
+    `Admin: subir imagen ${planned.publicUrl}`
   );
-  const result = finalizeWrite(local, github);
   if (!result.committed && !result.local) {
     throw new Error(result.error || "No se pudo subir la imagen");
   }
-  return { url: publicUrl, ...result };
+  return { url: planned.publicUrl, ...result };
 }

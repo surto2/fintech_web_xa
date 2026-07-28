@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
-import {
-  plainTextFromHtml,
-  readPostsFile,
-  writePostsFile,
-} from "@/lib/admin-store";
-import type { Post } from "@/lib/posts";
+import { updatePostFromRequest } from "@/lib/admin-posts";
+import { readPostsFile, writePostsFile } from "@/lib/admin-store";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 type Ctx = { params: Promise<{ slug: string }> };
 
@@ -15,41 +14,21 @@ export async function PUT(request: Request, ctx: Ctx) {
   }
 
   const { slug } = await ctx.params;
-  const body = (await request.json()) as Partial<Post>;
-  const posts = await readPostsFile();
-  const idx = posts.findIndex((p) => p.slug === slug);
-  if (idx < 0) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  try {
+    const { post, result } = await updatePostFromRequest(slug, request);
+    if (!result.committed && !result.local) {
+      return NextResponse.json(
+        { error: result.error || "No se pudo guardar" },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json({ post, ...result });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Error al actualizar";
+    const status = message === "Not found" ? 404 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
-
-  const current = posts[idx];
-  const html = body.html ?? current.html;
-  const text = plainTextFromHtml(html);
-  const updated: Post = {
-    ...current,
-    title: body.title?.trim() || current.title,
-    date: body.date || current.date,
-    excerpt: (body.excerpt || text).slice(0, 220),
-    categories: body.categories?.length ? body.categories : current.categories,
-    featuredImage:
-      body.featuredImage === undefined
-        ? current.featuredImage
-        : body.featuredImage,
-    seoTitle: body.seoTitle ?? current.seoTitle,
-    seoDescription: body.seoDescription ?? current.seoDescription,
-    html,
-    text,
-  };
-
-  posts[idx] = updated;
-  const result = await writePostsFile(posts, `Admin: actualizar ${slug}`);
-  if (!result.committed && !result.local) {
-    return NextResponse.json(
-      { error: result.error || "No se pudo guardar" },
-      { status: 500 }
-    );
-  }
-  return NextResponse.json({ post: updated, ...result });
 }
 
 export async function DELETE(_request: Request, ctx: Ctx) {

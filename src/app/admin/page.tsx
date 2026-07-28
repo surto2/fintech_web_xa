@@ -29,8 +29,8 @@ export default async function AdminHomePage() {
           Panel de gestión
         </h1>
         <p className="mt-2 text-ub-muted">
-          Elige qué quieres actualizar. Los cambios se guardan en el repositorio
-          (y en GitHub si configuras el token).
+          Escribe noticias con formato (párrafos, negrita, imágenes) y actualiza
+          plazas o precio. Al publicar se hace un solo deploy.
         </p>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
